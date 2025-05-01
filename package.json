@@ -1,0 +1,21 @@
+{
+  "name": "vord",
+  "version": "1.0.0",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start:client": "npm run dev --prefix client",
+    "start:api": "npm run start:dev --prefix api",
+    "start:all": "npm run start:client & npm run start:api"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Dzenoo/Vord.git"
+  },
+  "author": "Dzenis Gudzevic dzenisgudzevic18@gmail.com",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Dzenoo/Vord/issues"
+  },
+  "homepage": "https://github.com/Dzenoo/Vord#readme",
+  "description": "A real-time voice and chat platform inspired by Discord"
+}

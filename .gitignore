@@ -1,5 +1,7 @@
 # compiled output
+*dist*
 /dist
+*node_modules
 /node_modules
 /build
 
@@ -8,8 +10,6 @@ logs
 *.log
 npm-debug.log*
 pnpm-debug.log*
-yarn-debug.log*
-yarn-error.log*
 lerna-debug.log*
 
 # OS
@@ -20,6 +20,7 @@ lerna-debug.log*
 /.nyc_output
 
 # IDEs and editors
+.next
 /.idea
 .project
 .classpath
@@ -29,18 +30,21 @@ lerna-debug.log*
 *.sublime-workspace
 
 # IDE - VSCode
-.vscode/*
+.vscode
 !.vscode/settings.json
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
 
 # dotenv environment variable files
-.env
-.env.development.local
-.env.test.local
-.env.production.local
-.env.local
+*env*
+/.env
+/.env.development
+/.env.development.local
+/.env.test.local
+/.env.production.local
+/.env.local
+!.env.example
 
 # temp directory
 .temp
