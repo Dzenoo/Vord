@@ -32,6 +32,9 @@ export class User {
     default: false,
   })
   isGoogleAccount?: boolean;
+
+  @Prop()
+  refreshToken?: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
