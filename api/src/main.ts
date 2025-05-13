@@ -2,11 +2,17 @@ import * as cookieParser from 'cookie-parser';
 
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+import { CsrfMiddleware } from './authentication/middlewares/csrf.middleware';
+import { CsrfCheckMiddleware } from './authentication/middlewares/csrf-check.middleware';
 
 async function initializeServer() {
   const app = await NestFactory.create(AppModule);
 
   app.use(cookieParser());
+
+  app.use(new CsrfMiddleware().use);
+
+  app.use(new CsrfCheckMiddleware().use);
 
   app.setGlobalPrefix('api');
 

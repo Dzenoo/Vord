@@ -111,4 +111,9 @@ export class AuthController {
       .status(HttpStatus.OK)
       .json({ message: 'Logged out successfully' });
   }
+
+  @Get('/csrf-token')
+  getCsrfToken(@Req() req: any) {
+    return { csrfToken: req.csrfToken };
+  }
 }
