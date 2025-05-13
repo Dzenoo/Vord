@@ -14,7 +14,7 @@ export class CsrfCheckMiddleware implements NestMiddleware {
     }
 
     const secret = req.cookies['csrf-secret'];
-    const token = req.headers['x-csrf-token'] || req.body._csrf;
+    const token = req.headers['x-csrf-token'];
 
     if (!secret || !token || !tokens.verify(secret, token)) {
       return res.status(403).json({ message: 'Invalid CSRF token' });
