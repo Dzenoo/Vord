@@ -9,6 +9,7 @@ import { GoogleAuthService } from './services/google-auth.service';
 import { GoogleStrategy } from './strategies/google.strategy';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { TokenService } from './services/token.service';
+import { CookieService } from './services/cookie.service';
 
 import { AuthController } from './controllers/auth.controller';
 
@@ -27,7 +28,13 @@ import { AuthController } from './controllers/auth.controller';
     UserModule,
   ],
   controllers: [AuthController],
-  providers: [GoogleAuthService, GoogleStrategy, JwtStrategy, TokenService],
-  exports: [TokenService],
+  providers: [
+    GoogleAuthService,
+    GoogleStrategy,
+    JwtStrategy,
+    TokenService,
+    CookieService,
+  ],
+  exports: [TokenService, CookieService],
 })
 export class AuthModule {}

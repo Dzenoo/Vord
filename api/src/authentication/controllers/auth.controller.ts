@@ -16,6 +16,7 @@ import { GoogleOAuthGuard } from '../guards/google-oauth.guard';
 import { GoogleAuthService } from '../services/google-auth.service';
 import { UserService } from '@/models/user/user.service';
 import { TokenService } from '../services/token.service';
+import { CookieService } from '../services/cookie.service';
 
 @Controller('auth')
 export class AuthController {
@@ -23,6 +24,7 @@ export class AuthController {
     private readonly googleAuthService: GoogleAuthService,
     private readonly userService: UserService,
     private readonly tokenService: TokenService,
+    private readonly cookieService: CookieService,
   ) {}
 
   @Get('google')
@@ -36,19 +38,7 @@ export class AuthController {
       const { accessToken, refreshToken } =
         await this.googleAuthService.googleAuth(req);
 
-      res.cookie('accessToken', accessToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: 15 * 60 * 1000, // 15 minutes
-        sameSite: 'lax',
-      });
-
-      res.cookie('refreshToken', refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-        sameSite: 'lax',
-      });
+      this.cookieService.setAuthCookies(res, accessToken, refreshToken);
 
       res.redirect(`${process.env.FRONTEND_URL}/`);
     } catch (error) {
@@ -73,46 +63,22 @@ export class AuthController {
           email: payload.email,
         });
 
-      res.cookie('accessToken', accessToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: 15 * 60 * 1000,
-        sameSite: 'lax',
-      });
-
-      res.cookie('refreshToken', newRefreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-        sameSite: 'lax',
-      });
+      this.cookieService.setAuthCookies(res, accessToken, newRefreshToken);
 
       return res.json({ accessToken, refreshToken: newRefreshToken });
     } catch (error) {}
   }
 
-  @Post('/logout')
+  @Post('logout')
   async logout(@Res() res: Response) {
-    res.clearCookie('access_token', {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 15 * 60 * 1000,
-      sameSite: 'lax',
-    });
-
-    res.clearCookie('refresh_token', {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-      sameSite: 'lax',
-    });
+    this.cookieService.clearAuthCookies(res);
 
     return res
       .status(HttpStatus.OK)
       .json({ message: 'Logged out successfully' });
   }
 
-  @Get('/csrf-token')
+  @Get('csrf-token')
   getCsrfToken(@Req() req: any) {
     return { csrfToken: req.csrfToken };
   }
