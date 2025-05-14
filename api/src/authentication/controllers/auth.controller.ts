@@ -1,4 +1,5 @@
 import {
+  Body,
   Controller,
   Get,
   HttpStatus,
@@ -15,16 +16,22 @@ import { GoogleOAuthGuard } from '../guards/google-oauth.guard';
 
 import { GoogleAuthService } from '../services/google-auth.service';
 import { UserService } from '@/models/user/user.service';
+import { MagicCodeService } from '../services/magic-code.service';
 import { TokenService } from '../services/token.service';
 import { CookieService } from '../services/cookie.service';
+import { MailService } from '@/common/modules/email/mail.service';
+
+import { MagicRequestDto, MagicVerifyDto } from '../dto/magic.dto';
 
 @Controller('auth')
 export class AuthController {
   constructor(
     private readonly googleAuthService: GoogleAuthService,
+    private readonly magicCodeService: MagicCodeService,
     private readonly userService: UserService,
     private readonly tokenService: TokenService,
     private readonly cookieService: CookieService,
+    private readonly mailService: MailService,
   ) {}
 
   @Get('google')
@@ -45,6 +52,52 @@ export class AuthController {
       const message = encodeURIComponent(error.message);
       return res.redirect(`${process.env.FRONTEND_URL}/login?error=${message}`);
     }
+  }
+
+  @Post('magic/request')
+  async requestCode(@Body() body: MagicRequestDto) {
+    const { email } = body;
+
+    const code = await this.magicCodeService.generateCode(email);
+
+    await this.mailService.sendMail(
+      email,
+      `Your confirmation code: ${code}`,
+      'confirm-email',
+      {
+        code: code,
+        year: '2025',
+      },
+    );
+
+    return { message: 'Magic code sent to email' };
+  }
+
+  @Post('magic/verify')
+  async verifyCode(@Body() body: MagicVerifyDto, @Res() res: Response) {
+    const { email, code } = body;
+
+    await this.magicCodeService.verifyCode(email, code);
+
+    let user = await this.userService.findOne({ email });
+    if (!user)
+      user = await this.userService.createOne({ email, username: 'Username' });
+    if (!user)
+      return res
+        .status(HttpStatus.INTERNAL_SERVER_ERROR)
+        .json({ message: 'User could not be created' });
+
+    const { accessToken, refreshToken } =
+      await this.tokenService.generateTokens({
+        _id: user._id.toString(),
+        email: user.email,
+      });
+
+    this.cookieService.setAuthCookies(res, accessToken, refreshToken);
+
+    return res
+      .status(HttpStatus.OK)
+      .json({ message: 'Logged in successfully' });
   }
 
   @Post('refresh')
