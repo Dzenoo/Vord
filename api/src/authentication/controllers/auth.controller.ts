@@ -15,8 +15,8 @@ import { Request, Response } from 'express';
 import { GoogleOAuthGuard } from '../guards/google-oauth.guard';
 
 import { GoogleAuthService } from '../services/google-auth.service';
+import { MagicCodeService } from '@/models/magic-code/magic-code.service';
 import { UserService } from '@/models/user/user.service';
-import { MagicCodeService } from '../services/magic-code.service';
 import { TokenService } from '../services/token.service';
 import { CookieService } from '../services/cookie.service';
 import { MailService } from '@/common/modules/email/mail.service';

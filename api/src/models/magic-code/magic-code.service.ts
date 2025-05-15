@@ -4,7 +4,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { randomBytes } from 'crypto';
 
-import { MagicCode } from '@/models/user/schema/magic-code.schema';
+import { MagicCode } from '@/models/magic-code/schema/magic-code.schema';
 
 @Injectable()
 export class MagicCodeService {
