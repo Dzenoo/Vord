@@ -4,6 +4,9 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { AuthModule } from './authentication/auth.module';
 import { UserModule } from './models/user/user.module';
 import { GoogleStrategy } from './authentication/strategies/google.strategy';
+import { ServerModule } from './models/server/server.module';
+import { MessageModule } from './models/message/message.module';
+import { DmChannelModule } from './models/dm/dm-channel.module';
 
 @Module({
   imports: [
@@ -23,6 +26,9 @@ import { GoogleStrategy } from './authentication/strategies/google.strategy';
     }),
     AuthModule,
     UserModule,
+    ServerModule,
+    MessageModule,
+    DmChannelModule,
   ],
   providers: [GoogleStrategy],
 })
