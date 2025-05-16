@@ -1,5 +1,9 @@
-import { HydratedDocument } from 'mongoose';
+import { HydratedDocument, Types } from 'mongoose';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+
+import { nameRegex } from '@/common/constants';
+import { getRandomColor } from '@/common/utils';
+import { DmChannel } from '@/models/dm/schema/dm-channel.schema';
 
 @Schema({
   timestamps: true,
@@ -8,10 +12,11 @@ export class User {
   @Prop({
     type: String,
     required: true,
-    minlength: 2,
+    minlength: 5,
     maxlength: 15,
     trim: true,
     unique: true,
+    match: nameRegex,
   })
   username: string;
 
@@ -19,11 +24,57 @@ export class User {
     type: String,
     required: true,
     minlength: 5,
-    maxlength: 255,
+    maxlength: 155,
     trim: true,
     unique: true,
   })
   email: string;
+
+  @Prop({
+    type: String,
+    default: '',
+  })
+  avatarUrl?: string;
+
+  @Prop({
+    type: String,
+    required: false,
+    minlength: 5,
+    maxlength: 15,
+    trim: true,
+    unique: true,
+    default: '',
+  })
+  displayName?: string;
+
+  @Prop({
+    type: String,
+    required: false,
+    minlength: 5,
+    maxlength: 155,
+    trim: true,
+    default: '',
+  })
+  aboutMe?: string;
+
+  @Prop({
+    type: String,
+    default: getRandomColor(),
+  })
+  bannerColor?: string;
+
+  @Prop({
+    type: [{ type: Types.ObjectId, ref: 'User' }],
+    default: [],
+  })
+  friends: User[] & Types.ObjectId[];
+
+  @Prop({
+    type: [Types.ObjectId],
+    ref: 'DmChannel',
+    default: [],
+  })
+  directMessages: DmChannel[] & Types.ObjectId[];
 
   @Prop({
     type: Boolean,
