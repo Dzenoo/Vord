@@ -6,6 +6,7 @@ import {
   UpdateWriteOpResult,
 } from 'mongoose';
 import {
+  BadRequestException,
   ConflictException,
   HttpStatus,
   Injectable,
@@ -57,7 +58,9 @@ export class UserService {
       if (!receiver)
         throw new NotFoundException('User with this username cannot be found!');
 
-      const areAlreadyFriends = sender.friends.includes(receiver._id);
+      const areAlreadyFriends =
+        sender.friends.includes(receiver._id) ||
+        receiver.friends.includes(sender._id);
       if (areAlreadyFriends)
         throw new ConflictException('User is already your friend');
 
@@ -85,6 +88,48 @@ export class UserService {
       return {
         status: HttpStatus.CREATED,
         message: 'Request successfully sended!',
+      };
+    });
+  }
+
+  async manageFriendRequest(
+    userId: string,
+    senderId: string,
+    state: 'accept' | 'reject',
+  ) {
+    return withTransaction(this.connection, async (session) => {
+      const receiver = await this.userModel.findById(userId).session(session);
+      const sender = await this.userModel.findById(senderId).session(session);
+
+      if (!receiver || !sender) throw new NotFoundException();
+
+      const receiverRequest = receiver.friendRequests.find(
+        (r) => r.user.equals(sender._id) && r.type === 'incoming',
+      );
+      const senderRequest = sender.friendRequests.find(
+        (r) => r.user.equals(receiver._id) && r.type === 'outgoing',
+      );
+      if (!receiverRequest || !senderRequest)
+        throw new BadRequestException('No friend request found');
+
+      if (state === 'accept') {
+        receiver.friends.push(sender._id);
+        sender.friends.push(receiver._id);
+      }
+
+      receiver.friendRequests = receiver.friendRequests.filter(
+        (r) => !r.user.equals(sender._id),
+      );
+      sender.friendRequests = sender.friendRequests.filter(
+        (r) => !r.user.equals(receiver._id),
+      );
+
+      await receiver.save({ session });
+      await sender.save({ session });
+
+      return {
+        status: HttpStatus.OK,
+        message: `Friend request ${state}ed`,
       };
     });
   }

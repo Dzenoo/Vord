@@ -42,8 +42,15 @@ export class UserController {
     return await this.userService.sendFriendRequest(userId, body);
   }
 
-  @Post('friends/manage-request/:state')
-  async manageFriendRequest(@Param('state') state: 'accept' | 'reject') {}
+  @Post('friends/manage-request/:senderId/:state')
+  @UseGuards(JwtAuthGuard)
+  async manageFriendRequest(
+    @User('userId') userId: string,
+    @Param('senderId') senderId: string,
+    @Param('state') state: 'accept' | 'reject',
+  ) {
+    return await this.userService.manageFriendRequest(userId, senderId, state);
+  }
 
   @Get('friends/all-friends')
   async getAllFriends(@Query() query: GetFriendsDto) {}
