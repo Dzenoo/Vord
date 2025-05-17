@@ -7,6 +7,6 @@ import { Message } from './schema/message.schema';
 @Injectable()
 export class MessageService {
   constructor(
-    @InjectModel(Message.name) private readonly serverModel: Model<Message>,
+    @InjectModel(Message.name) private readonly messageModel: Model<Message>,
   ) {}
 }

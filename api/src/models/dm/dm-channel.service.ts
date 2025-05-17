@@ -7,6 +7,7 @@ import { DmChannel } from './schema/dm-channel.schema';
 @Injectable()
 export class DmChannelService {
   constructor(
-    @InjectModel(DmChannel.name) private readonly serverModel: Model<DmChannel>,
+    @InjectModel(DmChannel.name)
+    private readonly dmChannelModel: Model<DmChannel>,
   ) {}
 }

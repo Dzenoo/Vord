@@ -17,6 +17,7 @@ export class User {
     trim: true,
     unique: true,
     match: nameRegex,
+    index: true,
   })
   username: string;
 
@@ -38,9 +39,6 @@ export class User {
 
   @Prop({
     type: String,
-    required: false,
-    minlength: 5,
-    maxlength: 15,
     trim: true,
     unique: true,
     default: '',
@@ -49,9 +47,6 @@ export class User {
 
   @Prop({
     type: String,
-    required: false,
-    minlength: 5,
-    maxlength: 155,
     trim: true,
     default: '',
   })
@@ -62,6 +57,29 @@ export class User {
     default: getRandomColor(),
   })
   bannerColor?: string;
+
+  @Prop({
+    type: [
+      {
+        user: { type: Types.ObjectId, ref: 'User', required: true },
+        type: {
+          type: String,
+          enum: ['incoming', 'outgoing'],
+          required: true,
+        },
+        createdAt: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
+    default: [],
+  })
+  friendRequests: {
+    user: Types.ObjectId;
+    type: 'incoming' | 'outgoing';
+    createdAt?: Date;
+  }[];
 
   @Prop({
     type: [{ type: Types.ObjectId, ref: 'User' }],

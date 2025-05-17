@@ -20,8 +20,8 @@ async function initializeServer() {
 
   app.use(helmet());
   app.use(cookieParser());
-  app.use(new CsrfMiddleware().use);
-  app.use(new CsrfCheckMiddleware().use);
+  // app.use(new CsrfMiddleware().use);
+  // app.use(new CsrfCheckMiddleware().use);
   app.use(compression());
   app.useGlobalPipes(
     new ValidationPipe({
