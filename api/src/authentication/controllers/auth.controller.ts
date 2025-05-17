@@ -15,11 +15,12 @@ import { Request, Response } from 'express';
 import { GoogleOAuthGuard } from '../guards/google-oauth.guard';
 
 import { GoogleAuthService } from '../services/google-auth.service';
-import { MagicCodeService } from '@/models/magic-code/magic-code.service';
-import { UserService } from '@/models/user/user.service';
 import { TokenService } from '../services/token.service';
 import { CookieService } from '../services/cookie.service';
+import { MagicCodeService } from '@/models/magic-code/magic-code.service';
+import { UserService } from '@/models/user/user.service';
 import { MailService } from '@/common/modules/email/mail.service';
+import { generateUsername } from '@/common/utils';
 
 import { MagicRequestDto, MagicVerifyDto } from '../dto/magic.dto';
 
@@ -81,7 +82,10 @@ export class AuthController {
 
     let user = await this.userService.findOne({ email });
     if (!user)
-      user = await this.userService.createOne({ email, username: 'Username' });
+      user = await this.userService.createOne({
+        email,
+        username: generateUsername(),
+      });
     if (!user)
       return res
         .status(HttpStatus.INTERNAL_SERVER_ERROR)

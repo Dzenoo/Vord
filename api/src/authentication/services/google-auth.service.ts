@@ -2,6 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 
 import { UserService } from '@/models/user/user.service';
 import { TokenService } from './token.service';
+import { generateUsername } from '@/common/utils';
 
 import * as bcrypt from 'bcryptjs';
 
@@ -29,7 +30,7 @@ export class GoogleAuthService {
       throw new UnauthorizedException('No user from Google');
     }
 
-    const { email, firstName } = req.user;
+    const { email } = req.user;
 
     const existingUser = await this.userService.findOne({ email });
 
@@ -40,7 +41,7 @@ export class GoogleAuthService {
     const newUser = await this.userService.createOne({
       email,
       isGoogleAccount: true,
-      username: firstName,
+      username: generateUsername(),
     });
 
     if (!newUser) {
