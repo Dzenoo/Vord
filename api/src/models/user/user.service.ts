@@ -163,4 +163,36 @@ export class UserService {
       total,
     };
   }
+
+  async removeFriend(userId: string, friendId: string) {
+    return withTransaction(this.connection, async (session) => {
+      const loggedInUser = await this.userModel
+        .findById(userId)
+        .session(session);
+      const friend = await this.userModel.findById(friendId).session(session);
+
+      if (!loggedInUser || !friend)
+        throw new NotFoundException('User not found!');
+
+      const areFriends =
+        loggedInUser.friends.includes(friend._id) &&
+        friend.friends.includes(loggedInUser._id);
+      if (!areFriends) throw new BadRequestException();
+
+      loggedInUser.friends = loggedInUser.friends.filter(
+        (id) => !id.equals(friend._id),
+      );
+      friend.friends = friend.friends.filter(
+        (id) => !id.equals(loggedInUser._id),
+      );
+
+      await loggedInUser.save({ session });
+      await friend.save({ session });
+
+      return {
+        status: HttpStatus.OK,
+        message: 'Sucessfully removed friend',
+      };
+    });
+  }
 }

@@ -3,7 +3,6 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 
 import { nameRegex } from '@/common/constants';
 import { getRandomColor } from '@/common/utils';
-import { DmChannel } from '@/models/dm/schema/dm-channel.schema';
 
 @Schema({
   timestamps: true,
@@ -85,14 +84,14 @@ export class User {
     type: [{ type: Types.ObjectId, ref: 'User' }],
     default: [],
   })
-  friends: User[] & Types.ObjectId[];
+  friends: Types.ObjectId[];
 
   @Prop({
     type: [Types.ObjectId],
     ref: 'DmChannel',
     default: [],
   })
-  directMessages: DmChannel[] & Types.ObjectId[];
+  directMessages: Types.ObjectId[];
 
   @Prop({
     type: Boolean,
