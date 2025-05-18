@@ -53,7 +53,13 @@ export class UserController {
   }
 
   @Get('friends/all-friends')
-  async getAllFriends(@Query() query: GetFriendsDto) {}
+  @UseGuards(JwtAuthGuard)
+  async getAllFriends(
+    @User('userId') userId: string,
+    @Query() query: GetFriendsDto,
+  ) {
+    return await this.userService.getAllFriends(userId, query);
+  }
 
   @Patch('friends/remove-friend/:userId')
   async removeFriend(@Param('userId') userId: string) {}

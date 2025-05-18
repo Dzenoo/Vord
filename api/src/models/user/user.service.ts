@@ -19,6 +19,8 @@ import { User, UserDocument } from './schema/user.schema';
 import { ServerMember } from './schema/server-member.schema';
 
 import { SendFriendRequestDto } from './dto/send-friend-request.dto';
+import { GetFriendsDto } from './dto/get-friends.dto';
+
 import { withTransaction } from '@/common/utils';
 
 @Injectable()
@@ -132,5 +134,33 @@ export class UserService {
         message: `Friend request ${state}ed`,
       };
     });
+  }
+
+  async getAllFriends(userId: string, query: GetFriendsDto) {
+    const { page = 1, limit = 10, search } = query;
+
+    const user = await this.userModel.findById(userId).select('friends');
+    if (!user) throw new NotFoundException();
+
+    const match: any = { _id: { $in: user.friends } };
+
+    if (search) {
+      const regex = new RegExp(search, 'i');
+      match.username = regex;
+    }
+
+    const friends = await this.userModel
+      .find(match)
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .select('username');
+
+    const total = await this.userModel.countDocuments(match);
+
+    return {
+      status: HttpStatus.OK,
+      friends,
+      total,
+    };
   }
 }
