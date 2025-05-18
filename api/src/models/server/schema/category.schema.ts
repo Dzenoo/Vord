@@ -2,7 +2,6 @@ import { HydratedDocument, Types } from 'mongoose';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 
 import { nameRegex } from '@/common/constants';
-import { Server } from './server.schema';
 
 @Schema({ timestamps: true })
 export class Category {
@@ -21,7 +20,7 @@ export class Category {
     ref: 'Server',
     required: true,
   })
-  serverId: Server & Types.ObjectId;
+  serverId: Types.ObjectId;
 
   @Prop({ default: 0 })
   position: number;

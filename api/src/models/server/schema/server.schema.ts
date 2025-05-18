@@ -2,9 +2,6 @@ import { HydratedDocument, Types } from 'mongoose';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 
 import { nameRegex } from '@/common/constants';
-import { User } from '@/models/user/schema/user.schema';
-import { ServerMember } from '@/models/user/schema/server-member.schema';
-import { Channel } from './channel.schema';
 import { getRandomColor } from '@/common/utils';
 
 @Schema({
@@ -45,21 +42,21 @@ export class Server {
     ref: 'User',
     required: true,
   })
-  owner: User & Types.ObjectId;
+  owner: Types.ObjectId;
 
   @Prop({
     type: [Types.ObjectId],
     ref: 'ServerMember',
     default: [],
   })
-  members: ServerMember & Types.ObjectId[];
+  members: Types.ObjectId[];
 
   @Prop({
     type: [Types.ObjectId],
     ref: 'Channel',
     default: [],
   })
-  channels: Channel & Types.ObjectId[];
+  channels: Types.ObjectId[];
 }
 
 export type ServerDocument = HydratedDocument<Server>;
