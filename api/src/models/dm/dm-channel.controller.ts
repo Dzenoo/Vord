@@ -1,7 +1,16 @@
-import { Body, Controller, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 
 import { DmChannelService } from './dm-channel.service';
 import { CreateGroupDmDto, CreateOneOnOneDmDto } from './dto/create-dm.dto';
+import { GetDmsDto } from './dto/get-dms.dto';
 
 import { JwtAuthGuard } from '@/authentication/guards/jwt-auth.guard';
 import { User } from '@/common/decorators/user.decorator';
@@ -23,5 +32,17 @@ export class DmChannelController {
     @Body() body: CreateGroupDmDto,
   ) {
     return await this.dmChannelService.createGroup(userId, body);
+  }
+
+  @Get('list')
+  @UseGuards(JwtAuthGuard)
+  async getDmsList(@User('userId') userId: string, @Query() query: GetDmsDto) {
+    return await this.dmChannelService.getAll(userId, query);
+  }
+
+  @Get('details/:dmId')
+  @UseGuards(JwtAuthGuard)
+  async getDm(@User('userId') userId: string, @Param('dmId') dmId: string) {
+    return await this.dmChannelService.getOne(dmId, userId);
   }
 }
