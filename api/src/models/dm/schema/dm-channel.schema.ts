@@ -12,10 +12,13 @@ export class DmChannel {
       validator: function (participants: Types.ObjectId[]) {
         return participants.length === 2;
       },
-      message: 'DM channel must have exactly 2 participants',
+      message: 'At least two participants required',
     },
   })
   participants: Types.ObjectId[];
+
+  @Prop({ type: Types.ObjectId, ref: 'User', default: null })
+  creator?: Types.ObjectId;
 
   @Prop({ type: String, default: null })
   name?: string;

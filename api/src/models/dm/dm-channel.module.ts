@@ -4,6 +4,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { DmChannel, DmChannelSchema } from './schema/dm-channel.schema';
 import { DmChannelController } from './dm-channel.controller';
 import { DmChannelService } from './dm-channel.service';
+import { UserModule } from '../user/user.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { DmChannelService } from './dm-channel.service';
         schema: DmChannelSchema,
       },
     ]),
+    UserModule,
   ],
   controllers: [DmChannelController],
   exports: [DmChannelService],
