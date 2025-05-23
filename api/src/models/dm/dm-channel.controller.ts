@@ -21,28 +21,31 @@ export class DmChannelController {
 
   @Post('create/one-on-one')
   @UseGuards(JwtAuthGuard)
-  async createOneOnOne(@Body() body: CreateOneOnOneDmDto) {
-    return await this.dmChannelService.createOneOnOne(body);
+  async createOneOnOneDm(@Body() body: CreateOneOnOneDmDto) {
+    return await this.dmChannelService.createOneOnOneDm(body);
   }
 
   @Post('create/group')
   @UseGuards(JwtAuthGuard)
-  async createGroup(
+  async createGroupDm(
     @User('userId') userId: string,
     @Body() body: CreateGroupDmDto,
   ) {
-    return await this.dmChannelService.createGroup(userId, body);
+    return await this.dmChannelService.createGroupDm(userId, body);
   }
 
   @Get('list')
   @UseGuards(JwtAuthGuard)
-  async getDmsList(@User('userId') userId: string, @Query() query: GetDmsDto) {
-    return await this.dmChannelService.getAll(userId, query);
+  async getUserDms(@User('userId') userId: string, @Query() query: GetDmsDto) {
+    return await this.dmChannelService.getUserDms(userId, query);
   }
 
-  @Get('details/:dmId')
+  @Get(':dmId/details')
   @UseGuards(JwtAuthGuard)
-  async getDm(@User('userId') userId: string, @Param('dmId') dmId: string) {
-    return await this.dmChannelService.getOne(dmId, userId);
+  async getDmDetails(
+    @User('userId') userId: string,
+    @Param('dmId') dmId: string,
+  ) {
+    return await this.dmChannelService.getDmDetails(dmId, userId);
   }
 }

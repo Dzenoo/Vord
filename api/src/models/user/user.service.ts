@@ -2,6 +2,7 @@ import {
   Connection,
   FilterQuery,
   Model,
+  Types,
   UpdateQuery,
   UpdateWriteOpResult,
 } from 'mongoose';
@@ -105,7 +106,7 @@ export class UserService {
     });
   }
 
-  async manageFriendRequest(
+  async respondToFriendRequest(
     userId: string,
     senderId: string,
     state: 'accept' | 'reject',
@@ -147,6 +148,81 @@ export class UserService {
     });
   }
 
+  async getAllFriendRequests(
+    userId: string,
+    type: 'incoming' | 'outgoing',
+    query: GetFriendsDto,
+  ) {
+    const { page = 1, limit = 10, search } = query;
+
+    const pipeline: any[] = [
+      { $match: { _id: new Types.ObjectId(userId) } },
+      {
+        $project: {
+          friendRequests: {
+            $filter: {
+              input: '$friendRequests',
+              as: 'req',
+              cond: { $eq: ['$$req.type', type] },
+            },
+          },
+        },
+      },
+      { $unwind: '$friendRequests' },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'friendRequests.user',
+          foreignField: '_id',
+          as: 'friendUser',
+        },
+      },
+      { $unwind: '$friendUser' },
+    ];
+
+    if (search) {
+      pipeline.push({
+        $match: {
+          'friendUser.username': {
+            $regex: new RegExp(search, 'i'),
+          },
+        },
+      });
+    }
+
+    pipeline.push(
+      { $sort: { 'friendRequests.createdAt': -1 } },
+      { $skip: (page - 1) * limit },
+      { $limit: limit },
+      {
+        $project: {
+          _id: 0,
+          request: {
+            user: {
+              _id: '$friendUser._id',
+              username: '$friendUser.username',
+              avatarUrl: '$friendUser.avatarUrl',
+            },
+            type: '$friendRequests.type',
+            createdAt: '$friendRequests.createdAt',
+          },
+        },
+      },
+    );
+
+    const result = await this.userModel.aggregate(pipeline);
+
+    return {
+      data: {
+        requests: result.map((r) => r.request),
+      },
+      meta: {
+        page,
+        limit,
+      },
+    };
+  }
+
   async getAllFriends(userId: string, query: GetFriendsDto) {
     const { page = 1, limit = 10, search } = query;
 
@@ -170,7 +246,8 @@ export class UserService {
 
     return {
       status: HttpStatus.OK,
-      data: { friends, total },
+      data: { friends },
+      meta: { total },
     };
   }
 

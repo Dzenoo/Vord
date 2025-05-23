@@ -44,12 +44,25 @@ export class UserController {
 
   @Post('friends/manage-request/:senderId/:state')
   @UseGuards(JwtAuthGuard)
-  async manageFriendRequest(
+  async respondToFriendRequest(
     @User('userId') userId: string,
     @Param('senderId') senderId: string,
     @Param('state') state: 'accept' | 'reject',
   ) {
-    return await this.userService.manageFriendRequest(userId, senderId, state);
+    return await this.userService.respondToFriendRequest(
+      userId,
+      senderId,
+      state,
+    );
+  }
+
+  @Get('friends/all-requests/:type')
+  async getAllFriendRequests(
+    @User('userId') userId: string,
+    @Param('type') type: 'incoming' | 'outgoing',
+    @Query() query: GetFriendsDto,
+  ) {
+    return await this.userService.getAllFriendRequests(userId, type, query);
   }
 
   @Get('friends/all-friends')

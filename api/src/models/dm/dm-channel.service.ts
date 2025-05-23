@@ -21,26 +21,20 @@ export class DmChannelService {
     private readonly userService: UserService,
   ) {}
 
-  async createOneOnOne(body: CreateOneOnOneDmDto) {
+  async createOneOnOneDm(body: CreateOneOnOneDmDto) {
     if (body.userA === body.userB) {
       throw new NotAcceptableException('Cannot create DM with yourself.');
     }
 
-    const doesUsersExists = await this.userService.find({
-      _id: {
-        $in: [body.userA, body.userB],
-      },
+    const users = await this.userService.find({
+      _id: { $in: [body.userA, body.userB] },
     });
 
-    if (doesUsersExists.length !== 2) {
+    if (users.length !== 2) {
       throw new NotAcceptableException('One or more users do not exist.');
     }
 
-    const participants = [body.userA, body.userB]
-      .map((u) => u.toString())
-      .sort();
-
-    const [firstId, secondId] = participants;
+    const [firstId, secondId] = [body.userA, body.userB].map(String).sort();
 
     let dm = await this.dmChannelModel.findOne({
       participants: { $size: 2, $all: [firstId, secondId] },
@@ -48,7 +42,7 @@ export class DmChannelService {
 
     if (!dm) {
       dm = await this.dmChannelModel.create({
-        participants,
+        participants: [firstId, secondId],
       });
       await this.userService.findAndUpdateMany(
         { _id: { $in: [firstId, secondId] } },
@@ -56,28 +50,25 @@ export class DmChannelService {
       );
     }
 
-    return {
-      status: HttpStatus.ACCEPTED,
-      data: { dm: dm },
-    };
+    return { status: HttpStatus.ACCEPTED, data: { dm } };
   }
 
-  async createGroup(creator: string, body: CreateGroupDmDto) {
-    if (body.participants.length < 2) {
+  async createGroupDm(creatorId: string, dto: CreateGroupDmDto) {
+    if (dto.participants.length < 2) {
       throw new NotAcceptableException(
         'Group DMs require at least 3 participants (including yourself)',
       );
     }
 
     const participants = Array.from(
-      new Set([creator, ...body.participants.map((id) => id.toString())]),
+      new Set([creatorId, ...dto.participants.map(String)]),
     ).map((id) => new Types.ObjectId(id));
 
-    const existing = await this.dmChannelModel.findOne({
+    const exists = await this.dmChannelModel.findOne({
       participants: { $all: participants, $size: participants.length },
     });
 
-    if (existing) {
+    if (exists) {
       throw new ConflictException(
         'A group with these participants already exists.',
       );
@@ -85,70 +76,50 @@ export class DmChannelService {
 
     const group = await this.dmChannelModel.create({
       participants,
-      creator,
-      name: body.name ?? null,
-      icon: body.icon ?? null,
+      creator: creatorId,
+      name: dto.name ?? null,
+      icon: dto.icon ?? null,
     });
 
     await this.userService.findAndUpdateMany(
-      {
-        _id: { $in: participants },
-      },
-      {
-        $addToSet: { directMessages: group._id },
-      },
+      { _id: { $in: participants } },
+      { $addToSet: { directMessages: group._id } },
     );
 
-    return {
-      status: HttpStatus.CREATED,
-      data: { group },
-    };
+    return { status: HttpStatus.CREATED, data: { group } };
   }
 
-  async getAll(userId: string, query: GetDmsDto) {
+  async getUserDms(userId: string, query: GetDmsDto) {
     const { page = 1, limit = 15 } = query;
 
     const dms = await this.dmChannelModel
-      .find({
-        participants: userId,
-      })
+      .find({ participants: userId })
       .populate('participants')
       .skip((page - 1) * limit)
       .limit(limit)
       .lean();
 
-    if (dms.length === 0) {
-      return {
-        data: [],
-      };
-    }
-
-    const detailed = await Promise.all(
-      dms.map((dm) => this.getDmData(dm, userId)),
+    const data = await Promise.all(
+      dms.map((dm) => this.buildDmView(dm, userId)),
     );
 
-    return {
-      data: detailed,
-      count: detailed.length,
-      page,
-      limit,
-    };
+    return { data, meta: { count: data.length, page, limit } };
   }
 
-  async getOne(dmId: string, userId: string) {
+  async getDmDetails(dmId: string, userId: string) {
     const dm = await this.dmChannelModel
       .findById(dmId)
       .populate('participants')
       .lean();
 
-    if (!dm || !dm.participants.find((p) => p._id.toString() === userId)) {
+    if (!dm || !dm.participants.some((p) => p._id.toString() === userId)) {
       throw new NotFoundException('DM not found or you are not a participant');
     }
 
-    return await this.getDmData(dm, userId);
+    return await this.buildDmView(dm, userId);
   }
 
-  private async getDmData(dm: any, userId: string) {
+  private async buildDmView(dm: any, userId: string) {
     const isGroup = dm.participants.length > 2;
 
     if (isGroup) {
@@ -159,39 +130,30 @@ export class DmChannelService {
         icon: dm.icon,
         participants: dm.participants,
       };
-    } else {
-      const participant = dm.participants.find(
-        (p) => p._id.toString() !== userId,
-      );
-
-      const [user, other] = await Promise.all([
-        this.userService.findOne({ _id: userId }),
-        this.userService.findOne({ _id: participant._id }),
-      ]);
-
-      const mutualFriendsIds = user?.friends.filter(
-        (friendId: Types.ObjectId) =>
-          other?.friends.some(
-            (otherId: Types.ObjectId) =>
-              otherId.toString() === friendId.toString(),
-          ),
-      );
-      const mutualFriends = await this.userService.find({
-        _id: { $in: mutualFriendsIds },
-      });
-
-      // LATER
-      // const mutualServers = await this.serverModel.find({
-      //   members: { $all: [userId, other._id] },
-      // });
-
-      return {
-        id: dm._id,
-        type: 'one-on-one',
-        participant: other,
-        mutualFriends,
-        // mutualServers,
-      };
     }
+
+    const other = dm.participants.find((p) => p._id.toString() !== userId);
+
+    const [user, otherUser] = await Promise.all([
+      this.userService.findOne({ _id: userId }),
+      this.userService.findOne({ _id: other._id }),
+    ]);
+
+    const mutualFriendsIds = user?.friends.filter((id: Types.ObjectId) =>
+      otherUser?.friends.some(
+        (fid: Types.ObjectId) => fid.toString() === id.toString(),
+      ),
+    );
+
+    const mutualFriends = await this.userService.find({
+      _id: { $in: mutualFriendsIds },
+    });
+
+    return {
+      id: dm._id,
+      type: 'one-on-one',
+      participant: otherUser,
+      mutualFriends,
+    };
   }
 }
